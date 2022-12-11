@@ -21,7 +21,7 @@ int L0smoothing_L(unsigned char * image,
     
     double *Ma = (double*)malloc(sizeof(double) * height * width);
     for (size_t i = 0; i < (size_t)(width * height); i++) {
-        Ma[i] = (mask == NULL) ? 0. : ((double)mask[i] / 255.);
+        Ma[i] = (mask == NULL) ? 0 : ((double)mask[i] / 255.);
     }
     
     fftw_complex *fx_in, *fx_out;
@@ -36,14 +36,14 @@ int L0smoothing_L(unsigned char * image,
     pfx = fftw_plan_dft_2d(height, width, fx_in, fx_out, FFTW_FORWARD, FFTW_ESTIMATE);
     pfy = fftw_plan_dft_2d(height, width, fy_in, fy_out, FFTW_FORWARD, FFTW_ESTIMATE);
 
+    for (size_t i = 0; i < width * height; i++) {
+        fx_in[i][0] = fx_in[i][1] = fy_in[i][0] = fy_in[i][1] = 0;
+    }
+
     fx_in[0][0] = -1.;
-    fx_in[0][1] = 0;
     fx_in[width-1][0] = 1.;
-    fx_in[width-1][1] = 0;
     fy_in[0][0] = -1.;
-    fy_in[0][1] = 0;
     fy_in[(height-1)*width][0] = 1.;
-    fy_in[(height-1)*width][1] = 0;
 
     fftw_execute(pfx);
     fftw_execute(pfy);
@@ -131,6 +131,7 @@ int L0smoothing_L(unsigned char * image,
         FSp = fftw_plan_dft_2d(height, width, FSIn, FS, FFTW_BACKWARD, FFTW_ESTIMATE);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
+                Normin2In[y*width+x][1] = 0;
                 if (x == 0) {
                     Normin2In[y*width+x][0] = h[(y*width+x)] - h[(y*width)];
                 }
@@ -158,7 +159,7 @@ int L0smoothing_L(unsigned char * image,
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Im[(y*width+x)] = FS[y*width+x][0] / (double)(width*height);
+                Im[(y*width+x)] = FS[y*width+x][0] / (width*height);
             }
         }
 
@@ -170,7 +171,7 @@ int L0smoothing_L(unsigned char * image,
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            image[y*width+x] = (unsigned char)(255. * Im[(y*width+x)]);
+            image[y*width+x] = (Im[(y*width+x)] > 255) ? 255 : ((Im[(y*width+x)] < 0) ? 0 : (unsigned char)Im[(y*width+x)]);
         }
     }
 
@@ -206,7 +207,7 @@ int L0smoothing_RGB(unsigned char * image,
 
     double *Ma = (double*)malloc(sizeof(double) * height * width);
     for (size_t i = 0; i < (size_t)(width * height); i++) {
-        Ma[i] = (mask == NULL) ? 0. : ((double)mask[i] / 255.);
+        Ma[i] = (mask == NULL) ? 0 : ((double)mask[i] / 255.);
     }
     
     fftw_complex *fx_in, *fx_out;
@@ -221,14 +222,14 @@ int L0smoothing_RGB(unsigned char * image,
     pfx = fftw_plan_dft_2d(height, width, fx_in, fx_out, FFTW_FORWARD, FFTW_ESTIMATE);
     pfy = fftw_plan_dft_2d(height, width, fy_in, fy_out, FFTW_FORWARD, FFTW_ESTIMATE);
 
+    for (size_t i = 0; i < width * height; i++) {
+        fx_in[i][0] = fx_in[i][1] = fy_in[i][0] = fy_in[i][1] = 0;
+    }
+
     fx_in[0][0] = -1.;
-    fx_in[0][1] = 0;
     fx_in[width-1][0] = 1.;
-    fx_in[width-1][1] = 0;
     fy_in[0][0] = -1.;
-    fy_in[0][1] = 0;
     fy_in[(height-1)*width][0] = 1.;
-    fy_in[(height-1)*width][1] = 0;
 
     fftw_execute(pfx);
     fftw_execute(pfy);
@@ -294,7 +295,7 @@ int L0smoothing_RGB(unsigned char * image,
                     v[(y*width+x)+2*width*height] = 0;
                 }
                 else {
-                    _h = 0; _v = 0;
+                    _h = _v = 0;
                     for (int c = 0; c < 3; c++) {
                         if (x == width - 1) {
                             h[(y*width+x) + c*width*height] = (-Im[(y*width+x)+c*width*height] + Im[(y*width)+c*width*height]);
@@ -330,6 +331,7 @@ int L0smoothing_RGB(unsigned char * image,
             FSp = fftw_plan_dft_2d(height, width, FSIn, FS[c], FFTW_BACKWARD, FFTW_ESTIMATE);
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
+                    Normin2In[y*width+x][1] = 0;
                     if (x == 0) {
                         Normin2In[y*width+x][0] = h[(y*width+x)+c*width*height] - h[(y*width)+c*width*height];
                     }
@@ -357,7 +359,7 @@ int L0smoothing_RGB(unsigned char * image,
 
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    Im[(y*width+x)+c*width*height] = FS[c][y*width+x][0] / (double)(width*height);
+                    Im[(y*width+x)+c*width*height] = FS[c][y*width+x][0] / (width*height);
                 }
             }
 
@@ -371,7 +373,7 @@ int L0smoothing_RGB(unsigned char * image,
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             for (int c = 0; c < 3; c++) {
-                image[3*(y*width+x)+c] = (unsigned char)(255. * Im[(y*width+x) + c*width*height]);
+                image[3*(y*width+x)+c] = (Im[(y*width+x) + c*width*height] > 255) ? 255 : ((Im[(y*width+x) + c*width*height] < 0) ? 0 : (unsigned char)Im[(y*width+x) + c*width*height]);
             }
         }
     }

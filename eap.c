@@ -18,7 +18,7 @@ inline void fast_srand(int seed) {
 // Output value in range [0, 32767]
 inline double fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
-    return (double)((g_seed>>16)&0x7FFF) / 32767;
+    return (double)((g_seed>>16)&0x7FFF + 1) / 32769;
 }
 /*-----------------------------------------------*/
 
@@ -53,10 +53,10 @@ void quickPartition(double * arr, size_t lo, size_t hi, size_t idx) {
         return;
     }
     else if (idx <= left) {
-        quickPartition(arr, lo, left, idx);
+        return quickPartition(arr, lo, left, idx);
     }
     else {
-        quickPartition(arr, right+1, hi, idx);
+        return quickPartition(arr, right+1, hi, idx);
     }
 }
 
@@ -80,18 +80,16 @@ int eap(unsigned char * image,
     unsigned char *Ma = (unsigned char*)malloc(sizeof(unsigned char) * height * width);
     double *value = (double*)malloc(sizeof(double) * height * width);
     double *weight = (double*)malloc(sizeof(double) * height * width);
-    double *knapsack = (double*)malloc(sizeof(double) * height * width);
     double *thre = (double*)malloc(sizeof(double) * height * width);
-    double r, alpha, _knapsack, _thre;
+    double r, alpha, _knapsack, _thre, max=0;
 
     int ny, nx;
 
     for (size_t i = 0; i < (size_t)(width) * height; i++) {
-        r = fast_rand();
-        Ma[i] = (r < 0.5) ? 0 : 255;
+        Ma[i] = (fast_rand() < 0.5) ? 0 : 255;
     }
      
-    for (int k = 0; k < iter; k++) {
+    for (int k = 1; k <= iter; k++) {
         
         for (size_t i = 0; i < (size_t)(width) * height * 3; i++) {
             output[i] = image[i];
@@ -128,36 +126,27 @@ int eap(unsigned char * image,
                         }
                     }
                     
-                    r /= 9;
-                    value[y*width+x] += pow(((double)(output[3*(y*width+x) + c]) - image[3*(y*width+x) + c]), 2);
-                    weight[y*width+x] += pow(((double)(output[3*(y*width+x) + c]) - r), 2);
+                    r /= 9.;
+
+                    value[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) - image[3*(y*width+x)+c]), 2);
+                    weight[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) - r), 2);
                 }
 
-                knapsack[y*width+x] = value[y*width+x] / (weight[y*width+x] + eps_weight);
-                thre[y*width+x] = knapsack[y*width+x];
+                value[y*width+x] /= (weight[y*width+x] + eps_weight);
+                thre[y*width+x] = value[y*width+x];
             }
         }
 
-        alpha = ((double)(iter) - (k+1)) / (iter-1);
-
-        size_t idx = (size_t)((double)(height*width) * (1. - ((double)(k+1) * u) / (iter)));
+        size_t idx = (size_t)((double)(height*width) * (1. - (double)k * u / iter));
         quickPartition(thre, 0, height*width-1, idx);
         _thre = thre[idx];
-        
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                _knapsack = knapsack[y*width+x] / _thre;
-                r = fast_rand();
 
-                if (r * alpha + 1. - alpha < _knapsack) {
-                    Ma[y*width+x] = 255;
-                }
-                else {
-                    Ma[y*width+x] = 0;
-                }
-            }
+        alpha = ((double)(iter) - k) / (iter-1);
+        for (size_t i = 0; i < (size_t)height*width; i++) {
+            _knapsack = value[i] / _thre;
+
+            Ma[i] = (fast_rand() * alpha + 1. - alpha < _knapsack) ? 255 : 0;
         }
-
     }
 
     for (size_t i = 0; i < height * width * 3; i++) {
@@ -168,7 +157,6 @@ int eap(unsigned char * image,
     free(Ma);
     free(value);
     free(weight);
-    free(knapsack);
     free(thre);
 
     return 0;
