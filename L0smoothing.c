@@ -194,6 +194,7 @@ int L0smoothing_RGB(unsigned char * image,
     unsigned char * mask, double kappa, double lambda) {
 
     assert(width > 0 && height > 0);
+
     double *Im = (double*)malloc(sizeof(double) * height * width * 3);
     for (int c = 0; c < 3; c++) {
         for (int y = 0; y < height; y++) {
@@ -258,7 +259,6 @@ int L0smoothing_RGB(unsigned char * image,
             }
         }
         fftw_execute(p);
-        
         fftw_destroy_plan(p);
     }
     fftw_free(Normin1In);
@@ -398,7 +398,7 @@ int L0smoothing(unsigned char * image,
     unsigned char * mask, double kappa, double lambda) {
     
     assert(channel == 1 || channel == 3);
-    
+
     if (kappa == 0) {
         kappa = 2.0;
     }
@@ -410,6 +410,8 @@ int L0smoothing(unsigned char * image,
         return L0smoothing_L(image, height, width, mask, kappa, lambda);
     }
     else if (channel == 3) {
-        return L0Smoothing_RGB(image, height, width, mask, kappa, lambda);
+        return L0smoothing_RGB(image, height, width, mask, kappa, lambda);
     }
+
+    return -1;
 }
