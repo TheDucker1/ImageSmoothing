@@ -171,7 +171,7 @@ int L0smoothing_L(unsigned char * image,
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            image[y*width+x] = (Im[(y*width+x)] > 255) ? 255 : ((Im[(y*width+x)] < 0) ? 0 : (unsigned char)Im[(y*width+x)]);
+            image[y*width+x] = (Im[(y*width+x)] > 1) ? 255 : ((Im[(y*width+x)] < 0) ? 0 : (unsigned char)(255 * Im[(y*width+x)]));
         }
     }
 
@@ -373,7 +373,7 @@ int L0smoothing_RGB(unsigned char * image,
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             for (int c = 0; c < 3; c++) {
-                image[3*(y*width+x)+c] = (Im[(y*width+x) + c*width*height] > 255) ? 255 : ((Im[(y*width+x) + c*width*height] < 0) ? 0 : (unsigned char)Im[(y*width+x) + c*width*height]);
+                image[3*(y*width+x)+c] = (Im[(y*width+x) + c*width*height] > 1) ? 255 : ((Im[(y*width+x) + c*width*height] < 0) ? 0 : (unsigned char)(255 * Im[(y*width+x) + c*width*height]));
             }
         }
     }

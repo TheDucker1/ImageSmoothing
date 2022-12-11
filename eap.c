@@ -62,17 +62,16 @@ void quickPartition(double * arr, size_t lo, size_t hi, size_t idx) {
 
 int eap(unsigned char * image, 
     int height, int width,
-    double u, int iter,
+    double u,
     int (*func)(unsigned char *, int, int, unsigned char*)) {
 
     assert(height > 0 && width > 0);
     assert(0. <= u && u <= 1.);
 
-    if (iter == 0) {
-        iter = 5;
-    }
+    int iter = 5;
 
     const double eps_weight = 1.0;
+    double capacity = u * height * width;
 
     fast_srand(time(NULL));
 
@@ -122,14 +121,14 @@ int eap(unsigned char * image,
                                 nx = width - 1;
                             }
 
-                            r += (double)output[3*(ny*width+nx) + c];
+                            r += output[3*(ny*width+nx) + c];
                         }
                     }
                     
                     r /= 9.;
 
-                    value[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) - image[3*(y*width+x)+c]), 2);
-                    weight[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) - r), 2);
+                    value[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) / 255. - image[3*(y*width+x)+c]), 2);
+                    weight[y*width+x] += pow(((double)(output[3*(y*width+x)+c]) - r) / 255., 2);
                 }
 
                 value[y*width+x] /= (weight[y*width+x] + eps_weight);
