@@ -1,8 +1,6 @@
 /*
-required: fftw (https://www.fftw.org/)
-
 The Code is created based on the method described in the following paper
-[1] "Image Smoothing via L0 Gradient Minimization", Li Xu, Cewu Lu, Yi Xu, Jiaya Jia, ACM Transactions on Graphics,
+"Image Smoothing via L0 Gradient Minimization", Li Xu, Cewu Lu, Yi Xu, Jiaya Jia, ACM Transactions on Graphics,
 (SIGGRAPH Asia 2011), 2011.
 
 Based on the modification of the ToS2P (https://github.com/lllyasviel/AppearanceEraser)
