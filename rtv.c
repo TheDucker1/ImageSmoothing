@@ -4,6 +4,8 @@
 #include<math.h>
 #include<assert.h>
 
+#include<limits.h>
+
 #define util_max(a, b) (((a) > (b)) ? (a) : (b))
 #define util_min(a, b) (((a) < (b)) ? (a) : (b))
 #define util_square(a) ((a)*(a))
@@ -13,14 +15,14 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-int rtv_RGB_A_mul(double * A_D, double * A_dy, double * A_dx, long height,
-    long k, double * in, double * out) {
+int rtv_RGB_A_mul(double * A_D, double * A_dy, double * A_dx, int height,
+    int k, double * in, double * out) {
 
     // out = A * in
 
     // dx; dy; D; -dy; -dx
     int f[4];
-    for (long i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         f[0] = i >= height;
         f[1] = i >= 1;
         f[2] = i + 1 < k;
@@ -53,14 +55,14 @@ int rtv_RGB_A_mul(double * A_D, double * A_dy, double * A_dx, long height,
     return 0;
 }
 
-int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, long height,
-    long k, double * b, double * x) {
+int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, int height,
+    int k, double * b, double * x) {
 
     // M = L * L'
     // M * x = b
 
     double _x;
-    for (long i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         _x = b[i];
         if (i >= 1) _x -= x[i-1] * L_dy[i-1];
         if (i >= height) _x -= x[i-height] * L_dx[i-height];
@@ -68,7 +70,7 @@ int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, long height,
         x[i] = _x / L_D[i];
     }
 
-    for (long i = k; i >= 0; i--) {
+    for (int i = k; i >= 0; i--) {
         _x = x[i];
 
         if (i < k - 1) _x -= L_dy[i] * x[i+1];
@@ -86,7 +88,7 @@ int rtv_RGB_solveLinearEquation(double * IN,
     double lambda,
     double * OUT) {
     
-    long k = height * width;
+    int k = height * width;
 
     double * D = (double*)malloc(sizeof(double) * k);
     double * dx = (double*)malloc(sizeof(double) * k);
@@ -148,7 +150,7 @@ int rtv_RGB_solveLinearEquation(double * IN,
     //IC end
 
     //PCG start
-    //https://www.math.uci.edu/~chenlong/CAMtips/CG.html
+    //https://www.math.uci.edu/~chenint/CAMtips/CG.html
     //function u = pcg(A,b,u,B,tol)
     // u: OUT_p
     // b: IN_p
@@ -167,7 +169,7 @@ int rtv_RGB_solveLinearEquation(double * IN,
 
         //initial guess
         normb = normr = 0;
-        for (long i = 0; i < k; i++) {
+        for (int i = 0; i < k; i++) {
             normb += util_square(IN_p[i]);
             OUT_p[i] = 0;
             r[i] = IN_p[i];
@@ -181,32 +183,32 @@ int rtv_RGB_solveLinearEquation(double * IN,
             rtv_RGB_precond(L_D, L_dy, L_dx, height, k, r, Br);
             
             rho = 0;
-            for (long i = 0; i < k; i++) {
+            for (int i = 0; i < k; i++) {
                 rho += r[i] * (Br[i]);
             }
 
             if (step == 1) {
-                for (long i = 0; i < k; i++) {
+                for (int i = 0; i < k; i++) {
                     p[i] = Br[i];
                 }
             }
             else {
                 beta = rho / rho_old;
-                for (long i = 0; i < k; i++) {
+                for (int i = 0; i < k; i++) {
                     p[i] = Br[i] + beta * p[i];
                 }
             }
 
             rtv_RGB_A_mul(D, dy, dx, height, k, p, Ap);
             pAp = 0;
-            for (long i = 0; i < k; i++) {
+            for (int i = 0; i < k; i++) {
                 pAp += p[i] * (Ap[i]);
             }
 
             alpha = rho / pAp;
 
             normr = 0;
-            for (long i = 0; i < k; i++) {
+            for (int i = 0; i < k; i++) {
                 OUT_p[i] += alpha * p[i];
                 r[i] -= alpha * Ap[i];
                 normr += util_square(r[i]);
@@ -365,11 +367,6 @@ int rtv_RGB(unsigned char * image,
     unsigned char * mask,
     double lambda, double sigma, double sharpness, int maxIter) {
 
-    if (lambda == 0) lambda = 0.01;
-    if (sigma == 0) sigma = 3;
-    if (sharpness == 0) sharpness = 0.02;
-    if (maxIter == 0) maxIter = 4;
-
     double * I = (double*)malloc(sizeof(double) * width * height * 3);
     double * wx = (double*)malloc(sizeof(double) * width * height);
     double * wy = (double*)malloc(sizeof(double) * width * height);
@@ -498,6 +495,12 @@ int rtv(unsigned char * image,
 
     assert(channel == 3);
     assert(width >= 10 && height >= 10);
+    assert(INT_MAX / height > width);
+
+    if (lambda == 0) lambda = 0.01;
+    if (sigma == 0) sigma = 3;
+    if (sharpness == 0) sharpness = 0.02;
+    if (maxIter == 0) maxIter = 4;
 
     return rtv_RGB(image, height, width, mask, lambda, sigma, sharpness, maxIter);
 

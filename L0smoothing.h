@@ -8,9 +8,9 @@ Based on the modification of the ToS2P (https://github.com/lllyasviel/Appearance
 */
 
 /*
-image: 8bit image
+image: 8bit RGB image
 height, width: height and width of image
-channel: only support 1 OR 3
+channel: 3 (for now)
 mask: NULL or 8bit, 1channel, same size as image
 kappa: (in paper), set to 2.0 if 0
 lambda: (in paper), set to 2e-2 if 0

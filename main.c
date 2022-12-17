@@ -17,7 +17,7 @@ int main() {
         scanf("%hhu", &image[i]);
     }
 
-    eap(image, 494, 475, 0.1, 5, L0Smoothing_wrapper);
+    eap(image, 494, 475, 0.1, L0Smoothing_wrapper);
 
     for (size_t i = 0; i < 494 * 475 * 3; i++) {
         printf("%u ", image[i]);

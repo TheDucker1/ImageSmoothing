@@ -11,4 +11,4 @@ Please refer to main.c to see how the wrapper works
 int eap(unsigned char * image, 
     int height, int width,
     double u,
-    int (*func)(unsigned char*, int, int, unsigned char* ));
+    int (*energy_smoothing_func)(unsigned char*, int, int, unsigned char* ));

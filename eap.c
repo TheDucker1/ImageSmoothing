@@ -28,20 +28,20 @@ int cmpFunc(const void * a, const void * b) {
     return *(double*)a > *(double*)b;
 }
 
-inline void quickPartitionSwap(double * arr, long i, long j, double t) {
+inline void quickPartitionSwap(double * arr, int i, int j, double t) {
     t = arr[i];
     arr[i] = arr[j];
     arr[j] = t;
 }
 
-void quickPartition(double * arr, long lo, long hi, long idx) {
+void quickPartition(double * arr, int lo, int hi, int idx) {
     if (lo >= hi) {
         return;
     }
     double t=0;
-    long left = lo-1, right = hi;
+    int left = lo-1, right = hi;
     //pivot = arr[hi]
-    for (long i = lo; i < right; i++) {
+    for (int i = lo; i < right; i++) {
         if (arr[i] < arr[hi]) {
             left++;
             quickPartitionSwap(arr, i, left, t);
@@ -143,7 +143,7 @@ int eap(unsigned char * image,
             }
         }
 
-        long idx = (long)((double)(height*width) * (1. - (double)k * u / iter));
+        int idx = (int)((double)(height*width) * (1. - (double)k * u / iter));
         
         quickPartition(thre, 0, height*width-1, idx);
         //qsort(thre, height * width, sizeof(double), cmpFunc);
@@ -154,9 +154,7 @@ int eap(unsigned char * image,
             _knapsack = value[i] / _thre;
 
             Ma[i] = (fast_rand() * alpha + 1. - alpha < _knapsack) ? 255 : 0;
-            printf("%d ", Ma[i]);
         }
-        puts("");
     }
 
     for (size_t i = 0; i < height * width * 3; i++) {
