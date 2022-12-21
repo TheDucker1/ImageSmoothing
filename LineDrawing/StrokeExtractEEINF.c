@@ -14,26 +14,26 @@
 #define util_max(a, b) (((a) > (b)) ? (a) : (b))
 #define util_min(a, b) (((a) < (b)) ? (a) : (b))
 #define util_square(a) ((a)*(a))
-#define util_inv(a) (1. / (a))  //imply double
+#define util_inv(a) (1.f / (a))  //imply float
 
-inline double S(double a, double b) {
-    return 1. / pow(cosh((a - b) / 10), 5);
+inline float S(float a, float b) {
+    return 1. / powf(coshf((a - b) / 10), 5);
 }
 
 //https://stackoverflow.com/a/56678483
-double L(unsigned char rgb[3]) {
-    static double r, g, b, Y;
-    r=(double)rgb[0] / 255.;
-    g=(double)rgb[1] / 255.;
-    b=(double)rgb[2] / 255.;
+float L(unsigned char rgb[3]) {
+    static float r, g, b, Y;
+    r=(float)rgb[0] / 255.;
+    g=(float)rgb[1] / 255.;
+    b=(float)rgb[2] / 255.;
 
     //sRGB linearized
-    r = (r <= 0.04045) ? r / 12.92 : pow((r + 0.055) / 1.055, 2.4);
-    g = (g <= 0.04045) ? g / 12.92 : pow((g + 0.055) / 1.055, 2.4);
-    b = (b <= 0.04045) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4);
+    r = (r <= 0.04045) ? r / 12.92 : powf((r + 0.055) / 1.055, 2.4);
+    g = (g <= 0.04045) ? g / 12.92 : powf((g + 0.055) / 1.055, 2.4);
+    b = (b <= 0.04045) ? b / 12.92 : powf((b + 0.055) / 1.055, 2.4);
 
     Y = 0.2126 * r + 0.7152 * g + 0.0722 * b; //coeff sum to 1
-    //Y = (Y <= 0.008856) ? Y * (903.3) : pow(Y,(1/3)) * 116 - 16;
+    //Y = (Y <= 0.008856) ? Y * (903.3) : powf(Y,(1/3)) * 116 - 16;
     //Y /= 100;
 
     return Y;
@@ -42,7 +42,7 @@ double L(unsigned char rgb[3]) {
 
 int StrokeExtract(unsigned char * image,
     int height, int width, int channel,
-    int radius, double epsilon) {
+    int radius, float epsilon) {
 
     assert(width >= 10 && height >= 10);
     assert(INT_MAX / height >= width);
@@ -51,16 +51,16 @@ int StrokeExtract(unsigned char * image,
     //GuidedFilter(image, height, width, channel, NULL, 3, 4, 0.04);
     //assuming the image was smoothed beforehand
 
-    double * I = (double*)malloc(sizeof(double) * height * width);
+    float * I = (float*)malloc(sizeof(float) * height * width);
     for (int i = 0; i < width * height; i++) {
         I[i] = L(image + i * 3);
     }
 
     //threshold mass of similarity
-    double * m_thresh = (double*)calloc(height * width, sizeof(double));
+    float * m_thresh = (float*)calloc(height * width, sizeof(float));
 
     const int radius_square = util_square(radius);
-    double _I, _I_nb;
+    float _I, _I_nb;
     int y, x, dy, dx, ny, nx;
     
     //#pragma omp parallel for
@@ -94,19 +94,19 @@ int StrokeExtract(unsigned char * image,
 
     //LoG
     //https://stackoverflow.com/a/53665075
-    double * LoG = (double*)calloc(height * width, sizeof(double));
-    double * tmp1 = (double*)malloc(sizeof(double) * height * width);
+    float * LoG = (float*)calloc(height * width, sizeof(float));
+    float * tmp1 = (float*)malloc(sizeof(float) * height * width);
 
-    const double sigma = 1.1;
-    const int cutoff = ceil(sigma * 3);
-    const double sigma_pow2 = util_square(sigma);
-    const double sigma_pow4 = util_square(sigma_pow2);
+    const float sigma = 1.1f;
+    const int cutoff = ceilf(sigma * 3);
+    const float sigma_powf2 = util_square(sigma);
+    const float sigma_powf4 = util_square(sigma_powf2);
     int ksize = 2 * cutoff + 1;
     int r = ksize / 2;
-    double * kernel = (double*)malloc(sizeof(double) * ksize), s = 0;
-    double * Lkernel = (double*)malloc(sizeof(double) * ksize);
+    float * kernel = (float*)malloc(sizeof(float) * ksize), s = 0;
+    float * Lkernel = (float*)malloc(sizeof(float) * ksize);
     for (int i = 0; i <= r; i++) {
-        kernel[r-i] = kernel[r+i] = util_inv(exp((double)(i*i) / (2 * (sigma*sigma)))) * util_inv(sigma * sqrt(2 * M_PI));
+        kernel[r-i] = kernel[r+i] = util_inv(expf((float)(i*i) / (2 * (sigma*sigma)))) * util_inv(sigma * sqrtf(2 * M_PI));
         if (i == 0) s += kernel[r-i];
         else s += 2 * kernel[r-i];
     }
@@ -114,7 +114,7 @@ int StrokeExtract(unsigned char * image,
         kernel[i] /= s;
     }
     for (int i = -cutoff; i <= cutoff; i++) {
-        Lkernel[i+cutoff] = kernel[i+cutoff] * (util_square(i) - sigma_pow2) / sigma_pow4;
+        Lkernel[i+cutoff] = kernel[i+cutoff] * (util_square(i) - sigma_powf2) / sigma_powf4;
     }
 
     for (int y = 0; y < height; y++) {
@@ -170,8 +170,8 @@ int StrokeExtract(unsigned char * image,
     free(kernel); free(Lkernel);
     free(tmp1);
 
-    double _m_edge;
-    const double g = M_PI * util_square(r) / 2.;
+    float _m_edge;
+    const float g = M_PI * util_square(r) / 2.;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             _m_edge = LoG[y*width + x] * m_thresh[y*width + x];

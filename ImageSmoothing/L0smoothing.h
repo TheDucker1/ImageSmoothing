@@ -17,4 +17,4 @@ lambda: (in paper), set to 2e-2 if 0
 */
 int L0smoothing(unsigned char * image, 
     int height, int width, int channel,
-    unsigned char * mask, double kappa, double lambda);
+    unsigned char * mask, float kappa, float lambda);

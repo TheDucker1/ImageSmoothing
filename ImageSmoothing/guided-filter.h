@@ -10,4 +10,4 @@ int GuidedFilter(unsigned char * image,
     int height, int width, int channel,
     unsigned char * guidance,
     int guidance_channel,
-    int r, double epsilon);
+    int r, float epsilon);

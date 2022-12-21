@@ -12,8 +12,8 @@
 [d.3 e.4 f.5]   
 [g.6 h.7 i.8]
 */
-void util_invMat(double M[9]) {
-    static double A, B, C, D, E, F, G, H, I, det;
+void util_invMat(float M[9]) {
+    static float A, B, C, D, E, F, G, H, I, det;
     A = M[4]*M[8] - M[5]*M[7];
     B = M[5]*M[6] - M[3]*M[8];
     C = M[3]*M[7] - M[4]*M[6];
@@ -29,14 +29,14 @@ void util_invMat(double M[9]) {
     M[6] = C / det; M[7] = F / det; M[8] = I / det;
 }
 
-int util_boxFilter(double * input,
+int util_boxFilter(float * input,
     int height, int width, int r,
-    double * output, double *tmp) {
+    float * output, float *tmp) {
 
     if (output == NULL) output = input; //overwrite input
 
     int tmpFlag = (tmp == NULL);
-    if (tmpFlag) tmp = (double*)malloc(sizeof(double) * height * width);
+    if (tmpFlag) tmp = (float*)malloc(sizeof(float) * height * width);
 
     for (int x = 0; x < width; x++) {
         tmp[x] = input[x];
@@ -92,21 +92,21 @@ int util_boxFilter(double * input,
 
 
 //overwrite p
-int util_GuidedFilterMono(double * p,
+int util_GuidedFilterMono(float * p,
     int height, int width, 
-    int r, double eps,
-    double * I) {
+    int r, float eps,
+    float * I) {
 
-    double * tmp = (double *)malloc(sizeof(double) * width * height);
+    float * tmp = (float *)malloc(sizeof(float) * width * height);
 
-    double * N = (double *)malloc(sizeof(double) * width * height);
+    float * N = (float *)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         N[i] = 1;
     }
     util_boxFilter(N, height, width, r, NULL, tmp);
 
-    double * mean_I = (double *)malloc(sizeof(double) * width * height);
-    double * mean_p = (double *)malloc(sizeof(double) * width * height);
+    float * mean_I = (float *)malloc(sizeof(float) * width * height);
+    float * mean_p = (float *)malloc(sizeof(float) * width * height);
     util_boxFilter(I, height, width, r, mean_I, tmp);
     util_boxFilter(p, height, width, r, mean_I, tmp);
     for (int i = 0; i < width * height; i++) {
@@ -115,7 +115,7 @@ int util_GuidedFilterMono(double * p,
     }
 
     //mean_Ip too
-    double * cov_Ip = (double *)malloc(sizeof(double) * width * height);
+    float * cov_Ip = (float *)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         cov_Ip[i] = I[i] * p[i];
     }
@@ -125,7 +125,7 @@ int util_GuidedFilterMono(double * p,
     }
 
     //also mean_II
-    double * var_I = (double *)malloc(sizeof(double) * width * height);
+    float * var_I = (float *)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         var_I[i] = util_square(I[i]);
     }
@@ -134,8 +134,8 @@ int util_GuidedFilterMono(double * p,
         var_I[i] = var_I[i] / N[i] - util_square(mean_I[i]);
     }
 
-    double *mean_a = (double*)malloc(sizeof(double) * height * width);
-    double *mean_b = (double*)malloc(sizeof(double) * height * width);
+    float *mean_a = (float*)malloc(sizeof(float) * height * width);
+    float *mean_b = (float*)malloc(sizeof(float) * height * width);
     for (int i = 0; i < width * height; i++) {
         mean_a[i] = cov_Ip[i] / (var_I[i] + eps);
         mean_b[i] = mean_p[i] - mean_a[i] * mean_I[i];
@@ -160,29 +160,29 @@ int util_GuidedFilterMono(double * p,
     return 0;
 }
 
-int util_GuidedFilterColor(double * p,
+int util_GuidedFilterColor(float * p,
     int height, int width, 
-    int r, double eps,
-    double * I) {
+    int r, float eps,
+    float * I) {
 
-    double * I_r = I;
-    double * I_g = I + width * height;
-    double * I_b = I + 2 * width * height;
+    float * I_r = I;
+    float * I_g = I + width * height;
+    float * I_b = I + 2 * width * height;
 
-    double * tmp = (double *)malloc(sizeof(double) * width * height);
+    float * tmp = (float *)malloc(sizeof(float) * width * height);
 
-    double * N = (double *)malloc(sizeof(double) * width * height);
+    float * N = (float *)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         N[i] = 1;
     }
     util_boxFilter(N, height, width, r, NULL, tmp);
 
-    double * mean_p = (double *)malloc(sizeof(double) * width * height);
+    float * mean_p = (float *)malloc(sizeof(float) * width * height);
     util_boxFilter(p, height, width, r, mean_p, tmp);
 
-    double * mean_I_r = (double *)malloc(sizeof(double) * width * height);
-    double * mean_I_g = (double *)malloc(sizeof(double) * width * height);
-    double * mean_I_b = (double *)malloc(sizeof(double) * width * height);
+    float * mean_I_r = (float *)malloc(sizeof(float) * width * height);
+    float * mean_I_g = (float *)malloc(sizeof(float) * width * height);
+    float * mean_I_b = (float *)malloc(sizeof(float) * width * height);
     util_boxFilter(I_r, height, width, r, mean_I_r, tmp);
     util_boxFilter(I_g, height, width, r, mean_I_g, tmp);
     util_boxFilter(I_b, height, width, r, mean_I_b, tmp);
@@ -194,9 +194,9 @@ int util_GuidedFilterColor(double * p,
         mean_I_b[i] /= N[i];
     }
 
-    double * cov_Ip_r = (double *)malloc(sizeof(double) * width * height);
-    double * cov_Ip_g = (double *)malloc(sizeof(double) * width * height);
-    double * cov_Ip_b = (double *)malloc(sizeof(double) * width * height);    
+    float * cov_Ip_r = (float *)malloc(sizeof(float) * width * height);
+    float * cov_Ip_g = (float *)malloc(sizeof(float) * width * height);
+    float * cov_Ip_b = (float *)malloc(sizeof(float) * width * height);    
     for (int i = 0; i < width * height; i++) {
         cov_Ip_r[i] = I_r[i] * p[i];
         cov_Ip_g[i] = I_g[i] * p[i];
@@ -211,12 +211,12 @@ int util_GuidedFilterColor(double * p,
         cov_Ip_b[i] = cov_Ip_b[i] / N[i] - mean_I_b[i] * mean_p[i];
     }
 
-    double * var_I_rr = (double *)malloc(sizeof(double) * width * height);
-    double * var_I_rg = (double *)malloc(sizeof(double) * width * height);
-    double * var_I_rb = (double *)malloc(sizeof(double) * width * height);
-    double * var_I_gg = (double *)malloc(sizeof(double) * width * height);
-    double * var_I_gb = (double *)malloc(sizeof(double) * width * height);
-    double * var_I_bb = (double *)malloc(sizeof(double) * width * height);
+    float * var_I_rr = (float *)malloc(sizeof(float) * width * height);
+    float * var_I_rg = (float *)malloc(sizeof(float) * width * height);
+    float * var_I_rb = (float *)malloc(sizeof(float) * width * height);
+    float * var_I_gg = (float *)malloc(sizeof(float) * width * height);
+    float * var_I_gb = (float *)malloc(sizeof(float) * width * height);
+    float * var_I_bb = (float *)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         var_I_rr[i] = I_r[i] * I_r[i];
         var_I_rg[i] = I_r[i] * I_g[i];
@@ -240,8 +240,8 @@ int util_GuidedFilterColor(double * p,
         var_I_bb[i] = var_I_bb[i] / N[i] - mean_I_b[i] * mean_I_b[i];
     }
 
-    double * a = (double*)malloc(sizeof(double) * width * height * 3);
-    double Sigma[9]; //3x3 matrix
+    float * a = (float*)malloc(sizeof(float) * width * height * 3);
+    float Sigma[9]; //3x3 matrix
     for (int i = 0; i < width * height; i++) {
         Sigma[0] = var_I_rr[i] + eps; Sigma[1] = var_I_rg[i]      ; Sigma[2] = var_I_rb[i]      ;
         Sigma[3] = var_I_rg[i]      ; Sigma[4] = var_I_gg[i] + eps; Sigma[5] = var_I_gb[i]      ;
@@ -257,7 +257,7 @@ int util_GuidedFilterColor(double * p,
     free(var_I_rr); free(var_I_rg); free(var_I_rb);
     free(var_I_gg); free(var_I_gb); free(var_I_bb);
 
-    double * b = (double*)malloc(sizeof(double) * width * height);
+    float * b = (float*)malloc(sizeof(float) * width * height);
     for (int i = 0; i < width * height; i++) {
         b[i] = mean_p[i] - a[i*3+0] * mean_I_r[i] - a[i*3+1] * mean_I_g[i] - a[i*3+2] * mean_I_b[i];
     }
@@ -265,7 +265,7 @@ int util_GuidedFilterColor(double * p,
     
     free(mean_p);
 
-    double *ta = (double*)malloc(sizeof(double) * width * height * 3);
+    float *ta = (float*)malloc(sizeof(float) * width * height * 3);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             ta[y*width+x                 ] = a[3*(y*width+x)    ] * mean_I_r[y*width+x];
@@ -280,7 +280,7 @@ int util_GuidedFilterColor(double * p,
     free(ta);
     free(mean_I_r); free(mean_I_g); free(mean_I_b);
 
-    double *a_r = a, *a_g = a + width * height, *a_b = a + 2 * width * height;
+    float *a_r = a, *a_g = a + width * height, *a_b = a + 2 * width * height;
 
     for (int i = 0; i < width * height; i++) {
         p[i] = (a_r[i] * I_r[i] + a_g[i] * I_g[i] + a_b[i] * I_b[i] + b[i]) / N[i];
@@ -296,7 +296,7 @@ int GuidedFilter(unsigned char * image,
     int height, int width, int channel,
     unsigned char * guidance,
     int guidance_channel,
-    int r, double epsilon) {
+    int r, float epsilon) {
 
     if (guidance == NULL) {
         guidance_channel = channel;
@@ -308,30 +308,30 @@ int GuidedFilter(unsigned char * image,
     assert(guidance_channel == 1 || guidance_channel == 3);
     assert(INT_MAX / height >= width);
 
-    double *I = NULL;
+    float *I = NULL;
     if (guidance_channel == 1) {
-        I = (double*)malloc(sizeof(double) * height * width);
+        I = (float*)malloc(sizeof(float) * height * width);
 
         for (int i = 0; i < height * width; i++) {
-            I[i] = (double)guidance[i] / 255.;
+            I[i] = (float)guidance[i] / 255.;
         }
 
     }
     else if (guidance_channel == 3) {
-        I = (double*)malloc(sizeof(double) * height * width * 3);
+        I = (float*)malloc(sizeof(float) * height * width * 3);
         for (int c = 0; c < 3; c++) {
             for (int i = 0; i < height * width; i++) {
-                I[i + c * width * height] = (double)guidance[3*i + c] / 255.;
+                I[i + c * width * height] = (float)guidance[3*i + c] / 255.;
             }
         }
     }
 
-    double *p = NULL;
+    float *p = NULL;
     if (channel == 1) {
-        p = (double*)malloc(sizeof(double) * height * width);
+        p = (float*)malloc(sizeof(float) * height * width);
 
         for (int i = 0; i < height * width; i++) {
-            p[i] = (double)image[i] / 255.;
+            p[i] = (float)image[i] / 255.;
         }
 
         if (guidance_channel == 1) {
@@ -341,18 +341,18 @@ int GuidedFilter(unsigned char * image,
             util_GuidedFilterColor(p, height, width, r, epsilon, I);
         }
 
-        double _p;
+        float _p;
         for (int i = 0; i < width * height; i++) {
             _p = p[i];
             image[i] = (_p > 1) ? 255 : ((_p < 0) ? 0 : (unsigned char)(_p * 255));
         }
     }
     else if (channel == 3) {
-        p = (double*)malloc(sizeof(double) * height * width * 3);
+        p = (float*)malloc(sizeof(float) * height * width * 3);
 
         for (int c = 0; c < 3; c++) {
             for (int i = 0; i < width * height; i++) {
-                p[i + c*width*height] = (double)image[3*i + c] / 255.;
+                p[i + c*width*height] = (float)image[3*i + c] / 255.;
             }
 
             if (guidance_channel == 1) {
@@ -363,7 +363,7 @@ int GuidedFilter(unsigned char * image,
             }
         }
 
-        double _p;
+        float _p;
         for (int c = 0; c < 3; c++) {
             for (int i = 0; i < width * height; i++) {
                 _p = (p + c * width * height)[i];

@@ -19,27 +19,27 @@ inline void fast_srand(int seed) {
 
 // Compute a pseudorandom integer.
 // Output value in range [0, 32767]
-inline double fast_rand(void) {
+inline float fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
-    return (double)((g_seed>>16)&0x7FFF + 1) / 32769;
+    return (float)((g_seed>>16)&0x7FFF + 1) / 32769; //(0, 1)
 }
 /*-----------------------------------------------*/
 
 int cmpFunc(const void * a, const void * b) {
-    return *(double*)a > *(double*)b;
+    return *(float*)a > *(float*)b;
 }
 
-inline void quickPartitionSwap(double * arr, int i, int j, double t) {
+inline void quickPartitionSwap(float * arr, int i, int j, float t) {
     t = arr[i];
     arr[i] = arr[j];
     arr[j] = t;
 }
 
-void quickPartition(double * arr, int lo, int hi, int idx) {
+void quickPartition(float * arr, int lo, int hi, int idx) {
     if (lo >= hi) {
         return;
     }
-    double t=0;
+    float t=0;
     int left = lo-1, right = hi;
     //pivot = arr[hi]
     for (int i = lo; i < right; i++) {
@@ -69,7 +69,7 @@ void quickPartition(double * arr, int lo, int hi, int idx) {
 
 int eap(unsigned char * image, 
     int height, int width,
-    double u,
+    float u,
     int (*func)(unsigned char *, int, int, unsigned char*)) {
 
     assert(height >= 10 && width >= 10);
@@ -78,16 +78,16 @@ int eap(unsigned char * image,
 
     const int iter = 5;
 
-    const double eps_weight = 1.0;
+    const float eps_weight = 1.0;
 
     fast_srand(time(NULL));
 
     unsigned char *output = (unsigned char*)malloc(sizeof(unsigned char) * height * width * 3);
     unsigned char *Ma = (unsigned char*)malloc(sizeof(unsigned char) * height * width);
-    double *value = (double*)malloc(sizeof(double) * height * width);
-    double *weight = (double*)malloc(sizeof(double) * height * width);
-    double *thre = (double*)malloc(sizeof(double) * height * width);
-    double r, alpha, _knapsack, _thre, r2;
+    float *value = (float*)malloc(sizeof(float) * height * width);
+    float *weight = (float*)malloc(sizeof(float) * height * width);
+    float *thre = (float*)malloc(sizeof(float) * height * width);
+    float r, alpha, _knapsack, _thre, r2;
 
     int ny, nx;
 
@@ -133,7 +133,7 @@ int eap(unsigned char * image,
                     }
                     
                     r /= 9;
-                    r2 = (double)output[3*(y*width+x)+c] / 255. - image[3*(y*width+x)+c]; //don't know why but the matlab implementation imply it takes the euclid distance of [0, 1] out_img and [0, 255] in_img??
+                    r2 = (float)output[3*(y*width+x)+c] / 255. - image[3*(y*width+x)+c]; //don't know why but the matlab implementation imply it takes the euclid distance of [0, 1] out_img and [0, 255] in_img??
                     r -= output[3*(y*width+x)+c];
 
                     value[y*width+x] += eapSquare(r2);
@@ -145,13 +145,13 @@ int eap(unsigned char * image,
             }
         }
 
-        int idx = (int)((double)(height*width) * (1. - (double)k * u / iter));
+        int idx = (int)((float)(height*width) * (1. - (float)k * u / iter));
         
         quickPartition(thre, 0, height*width-1, idx);
-        //qsort(thre, height * width, sizeof(double), cmpFunc);
+        //qsort(thre, height * width, sizeof(float), cmpFunc);
         _thre = thre[idx];
 
-        alpha = ((double)(iter) - k) / (iter-1);
+        alpha = ((float)(iter) - k) / (iter-1);
         for (size_t i = 0; i < (size_t)height*width; i++) {
             _knapsack = value[i] / _thre;
 

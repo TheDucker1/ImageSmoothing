@@ -10,13 +10,13 @@ Please refer below to see how the wrapper works
 
 int eap(unsigned char * image, 
     int height, int width,
-    double u,
+    float u,
     int (*energy_smoothing_func)(unsigned char*, int, int, unsigned char* ));
 
 /*
 int L0smoothing(unsigned char * image, 
     int height, int width, int channel,
-    unsigned char * mask, double kappa, double lambda);
+    unsigned char * mask, float kappa, float lambda);
 
 int L0Smoothing_wrapper(unsigned char * image, 
     int height, int width,

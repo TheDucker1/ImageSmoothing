@@ -9,14 +9,14 @@
 #define util_max(a, b) (((a) > (b)) ? (a) : (b))
 #define util_min(a, b) (((a) < (b)) ? (a) : (b))
 #define util_square(a) ((a)*(a))
-#define util_inv(a) (1. / (a))  //imply double
+#define util_inv(a) (1.f / (a))  //imply float
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-int rtv_RGB_A_mul(double * A_D, double * A_dy, double * A_dx, int height,
-    int k, double * in, double * out) {
+int rtv_RGB_A_mul(float * A_D, float * A_dy, float * A_dx, int height,
+    int k, float * in, float * out) {
 
     // out = A * in
 
@@ -55,13 +55,13 @@ int rtv_RGB_A_mul(double * A_D, double * A_dy, double * A_dx, int height,
     return 0;
 }
 
-int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, int height,
-    int k, double * b, double * x) {
+int rtv_RGB_precond(float * L_D, float * L_dy, float * L_dx, int height,
+    int k, float * b, float * x) {
 
     // M = L * L'
     // M * x = b
 
-    double _x;
+    float _x;
     for (int i = 0; i < k; i++) {
         _x = b[i];
         if (i >= 1) _x -= x[i-1] * L_dy[i-1];
@@ -70,7 +70,7 @@ int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, int height,
         x[i] = _x / L_D[i];
     }
 
-    for (int i = k; i >= 0; i--) {
+    for (int i = k - 1; i >= 0; i--) {
         _x = x[i];
 
         if (i < k - 1) _x -= L_dy[i] * x[i+1];
@@ -82,22 +82,22 @@ int rtv_RGB_precond(double * L_D, double * L_dy, double * L_dx, int height,
     return 0;
 }
 
-int rtv_RGB_solveLinearEquation(double * IN,
+int rtv_RGB_solveLinearEquation(float * IN,
     int height, int width,
-    double * wx, double * wy,
-    double lambda,
-    double * OUT) {
+    float * wx, float * wy,
+    float lambda,
+    float * OUT) {
     
     int k = height * width;
 
-    double * D = (double*)malloc(sizeof(double) * k);
-    double * dx = (double*)malloc(sizeof(double) * k);
-    double * dy = (double*)malloc(sizeof(double) * k);
+    float * D = (float*)malloc(sizeof(float) * k);
+    float * dx = (float*)malloc(sizeof(float) * k);
+    float * dy = (float*)malloc(sizeof(float) * k);
 
-    double * OUT_p;
-    double * IN_p;
+    float * OUT_p;
+    float * IN_p;
 
-    double _e, _s, _w, _n; // 4dir
+    float _e, _s, _w, _n; // 4dir
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             _e = -lambda * wx[x*height + y];
@@ -124,11 +124,11 @@ int rtv_RGB_solveLinearEquation(double * IN,
 
     //CALCULATE start
     //IC start
-    double * L_D = (double*)malloc(sizeof(double) * k);
-    double * L_dy = (double*)malloc(sizeof(double) * (k - 1));
-    double * L_dx = (double*)malloc(sizeof(double) * (k - height));
+    float * L_D = (float*)malloc(sizeof(float) * k);
+    float * L_dy = (float*)malloc(sizeof(float) * (k - 1));
+    float * L_dx = (float*)malloc(sizeof(float) * (k - height));
 
-    double _L_D;
+    float _L_D;
     for (size_t i = 0; i < k; i++) {
         _L_D = D[i];
         if (i >= 1) _L_D -= util_square(L_dy[i-1]);
@@ -154,11 +154,11 @@ int rtv_RGB_solveLinearEquation(double * IN,
     //function u = pcg(A,b,u,B,tol)
     // u: OUT_p
     // b: IN_p
-    double normb, normr, rho, rho_old, pAp, tol = 1e-1, alpha, beta;
-    double * r = (double *)malloc(sizeof(double) * k);
-    double * p = (double *)malloc(sizeof(double) * k);
-    double * Ap = (double *)malloc(sizeof(double) * k);
-    double * Br = (double *)malloc(sizeof(double) * k);
+    float normb, normr, rho, rho_old, pAp, tol = 1e-1, alpha, beta;
+    float * r = (float *)malloc(sizeof(float) * k);
+    float * p = (float *)malloc(sizeof(float) * k);
+    float * Ap = (float *)malloc(sizeof(float) * k);
+    float * Br = (float *)malloc(sizeof(float) * k);
     int step = 0, maxstep = 100;
 
     for (int c = 0; c < 3; c++) {
@@ -238,16 +238,16 @@ int rtv_RGB_solveLinearEquation(double * IN,
     return 0;
 }
 
-int rtv_RGB_computeTextureWeights(double * fin,
+int rtv_RGB_computeTextureWeights(float * fin,
     int height, int width,
-    double sigma, double sharpness,
-    double *retx, double * rety) {
+    float sigma, float sharpness,
+    float *retx, float * rety) {
     
-    double vareps = 0.001, _fx, _fy, _wto = 0, _fbin = 0;
+    float vareps = 0.001, _fx, _fy, _wto = 0, _fbin = 0;
 
-    double *wto = (double*)malloc(sizeof(double) * width * height);
-    double *fbin = (double*)malloc(sizeof(double) * width * height * 3);
-    double *fbin2 = (double*)malloc(sizeof(double) * width * height * 3);
+    float *wto = (float*)malloc(sizeof(float) * width * height);
+    float *fbin = (float*)malloc(sizeof(float) * width * height * 3);
+    float *fbin2 = (float*)malloc(sizeof(float) * width * height * 3);
 
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
@@ -267,9 +267,9 @@ int rtv_RGB_computeTextureWeights(double * fin,
     //START OF lpfilter
     int ksize = (int)round(5*sigma) | 1;
     int r = ksize / 2;
-    double * kernel = (double*)malloc(sizeof(double) * ksize), s = 0;
+    float * kernel = (float*)malloc(sizeof(float) * ksize), s = 0;
     for (int i = 0; i <= r; i++) {
-        kernel[r-i] = kernel[r+i] = util_inv(exp((double)(i*i) / (2 * (sigma*sigma)))) * util_inv(sigma * sqrt(2 * M_PI));
+        kernel[r-i] = kernel[r+i] = util_inv(exp((float)(i*i) / (2 * (sigma*sigma)))) * util_inv(sigma * sqrt(2 * M_PI));
         if (i == 0) s += kernel[r-i];
         else s += 2 * kernel[r-i];
     }
@@ -325,7 +325,7 @@ int rtv_RGB_computeTextureWeights(double * fin,
 
     //END OF lpfilter
 
-    double * fbin_pointer2[3];
+    float * fbin_pointer2[3];
     fbin_pointer2[0] = fbin;
     fbin_pointer2[1] = fbin + width * height;
     fbin_pointer2[2] = fbin + 2 * width * height;
@@ -365,34 +365,34 @@ int rtv_RGB_computeTextureWeights(double * fin,
 int rtv_RGB(unsigned char * image, 
     int height, int width,
     unsigned char * mask,
-    double lambda, double sigma, double sharpness, int maxIter) {
+    float lambda, float sigma, float sharpness, int maxIter) {
 
-    double * I = (double*)malloc(sizeof(double) * width * height * 3);
-    double * wx = (double*)malloc(sizeof(double) * width * height);
-    double * wy = (double*)malloc(sizeof(double) * width * height);
-    double * Ix = (double*)malloc(sizeof(double) * width * height * 3);
+    float * I = (float*)malloc(sizeof(float) * width * height * 3);
+    float * wx = (float*)malloc(sizeof(float) * width * height);
+    float * wy = (float*)malloc(sizeof(float) * width * height);
+    float * Ix = (float*)malloc(sizeof(float) * width * height * 3);
 
     if (mask == NULL) {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 for (int c = 0; c < 3; c++) {
-                    I[3*(y*width+x) + c] = (double)image[3*(y*width+x) + c];
+                    I[3*(y*width+x) + c] = (float)image[3*(y*width+x) + c];
                 }
             }
         }
     }
     else {
-        double * M = (double*)malloc(sizeof(double) * width * height);
-        double * Mw = (double*)malloc(sizeof(double) * width * height);
+        float * M = (float*)malloc(sizeof(float) * width * height);
+        float * Mw = (float*)malloc(sizeof(float) * width * height);
 
-        double _Mw, _M;
+        float _Mw, _M;
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                M[y*width+x] = (double)mask[y*width + x] / 255.;
+                M[y*width+x] = (float)mask[y*width + x] / 255.;
                 Mw[y*width+x] = 1.0 - M[y*width+x] + 1e-5;
                 for (int c = 0; c < 3; c++) {
-                    I[3*(y*width+x) + c] = (double)image[3*(y*width+x) + c];
+                    I[3*(y*width+x) + c] = (float)image[3*(y*width+x) + c];
                 }
             }
         }
@@ -421,7 +421,7 @@ int rtv_RGB(unsigned char * image,
 
                     for (int c = 0; c < 3; c++) {
                         I[3*(y*width+x) + c] /= _Mw;
-                        I[3*(y*width+x) + c] = I[3*(y*width+x) + c] * _M + (double)image[3*(y*width+x) + c] * (1. - _M);
+                        I[3*(y*width+x) + c] = I[3*(y*width+x) + c] * _M + (float)image[3*(y*width+x) + c] * (1. - _M);
                     }
 
                     Mw[y*width+x] = (_Mw / 4 < 0.25) ? 1e-5 : (1 + 1e-5);
@@ -444,9 +444,9 @@ int rtv_RGB(unsigned char * image,
         }
     }
 
-    double sigma_iter = sigma;
+    float sigma_iter = sigma;
     lambda /= 2;
-    double dec = 2;
+    float dec = 2;
 
     //transform to col major, channel by channel
     for (int y = 0; y < height; y++) {
@@ -470,7 +470,7 @@ int rtv_RGB(unsigned char * image,
         if (sigma_iter < 0.5) sigma_iter = 0.5;
     }
 
-    double _I;
+    float _I;
     for (int c = 0; c < 3; c++) {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -491,7 +491,7 @@ int rtv_RGB(unsigned char * image,
 int rtv(unsigned char * image, 
     int height, int width, int channel,
     unsigned char * mask,
-    double lambda, double sigma, double sharpness, int maxIter) {
+    float lambda, float sigma, float sharpness, int maxIter) {
 
     assert(channel == 3);
     assert(width >= 10 && height >= 10);

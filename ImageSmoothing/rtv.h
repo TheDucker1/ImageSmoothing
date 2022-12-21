@@ -10,4 +10,4 @@ Based on the implemetation of the ToS2P (https://github.com/lllyasviel)
 int rtv(unsigned char * image, 
     int height, int width, int channel,
     unsigned char * mask,
-    double lambda, double sigma, double sharpness, int maxIter);
+    float lambda, float sigma, float sharpness, int maxIter);

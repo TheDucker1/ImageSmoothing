@@ -15,7 +15,7 @@
 #endif
 
 //build bit_reverse_table among other things (if any)
-int util_FFT_preload(int ** bit_reverse_table, double **root_r, double ** root_i, int n) {
+int util_FFT_preload(int ** bit_reverse_table, float **root_r, float ** root_i, int n) {
     assert(n > 0);
     //assert(*bit_reverse_table == NULL); //avoid leak
     //assert(*root_r == NULL)
@@ -42,22 +42,22 @@ int util_FFT_preload(int ** bit_reverse_table, double **root_r, double ** root_i
     }
 
     //pre calculate root
-    *root_r = (double*)malloc(sizeof(double) * (size));
-    *root_i = (double*)malloc(sizeof(double) * (size));
-    double alpha, _alpha = -2 * M_PI / size;
+    *root_r = (float*)malloc(sizeof(float) * (size));
+    *root_i = (float*)malloc(sizeof(float) * (size));
+    float alpha, _alpha = -2 * M_PI / size;
     int j;
     for (int i = 0; i < size; i++) {
         alpha = _alpha * i;
-        (*root_r)[i] = cos(alpha);
-        (*root_i)[i] = sin(alpha);
+        (*root_r)[i] = cosf(alpha);
+        (*root_i)[i] = sinf(alpha);
     }
 
     return size;
 }
 
-int util_FFT_butterfly(double * in_r, double * in_i, int * bit_table, int n) {
+int util_FFT_butterfly(float * in_r, float * in_i, int * bit_table, int n) {
     int j;
-    double t;
+    float t;
     for (int i = 0; i < n; i++) {
         j = bit_table[i];
         if (i < j) {
@@ -75,12 +75,12 @@ int util_FFT_butterfly(double * in_r, double * in_i, int * bit_table, int n) {
 }
 
 
-int util_FFT_1D(double *inout_r, double *inout_i, double *root_r, double *root_i, int * bit_table, int n, int rev) {
+int util_FFT_1D(float *inout_r, float *inout_i, float *root_r, float *root_i, int * bit_table, int n, int rev) {
 
     util_FFT_butterfly(inout_r, inout_i, bit_table, n);
 
     int root_idx = n;
-    double _imm1_r1, _imm1_i1, _imm1_r2, _imm1_i2, real, imag, cr, ci;
+    float _imm1_r1, _imm1_i1, _imm1_r2, _imm1_i2, real, imag, cr, ci;
     for (int block_size = 2; block_size <= n; block_size *= 2) {
         root_idx >>= 1;
         for (int block_offset = 0; block_offset < n; block_offset += block_size) {
@@ -112,16 +112,16 @@ int util_FFT_1D(double *inout_r, double *inout_i, double *root_r, double *root_i
     return 0;
 }
 
-int util_FFT_preload_bluestein(double **coeff_r, double **coeff_i, int size) {
-    double _alpha = (-M_PI / size), alpha;
-    (*coeff_r) = (double*)malloc(sizeof(double) * size);
-    (*coeff_i) = (double*)malloc(sizeof(double) * size);
+int util_FFT_preload_bluestein(float **coeff_r, float **coeff_i, int size) {
+    float _alpha = (-M_PI / size), alpha;
+    (*coeff_r) = (float*)malloc(sizeof(float) * size);
+    (*coeff_i) = (float*)malloc(sizeof(float) * size);
 
     int _size = size*2;
     for (int i = 0; i < size; i++) {
         alpha = _alpha * ((i * i) % (_size));
-        (*coeff_r)[i] = cos(alpha);
-        (*coeff_i)[i] = sin(alpha);
+        (*coeff_r)[i] = cosf(alpha);
+        (*coeff_i)[i] = sinf(alpha);
     }
 
     int m = 1;
@@ -130,18 +130,18 @@ int util_FFT_preload_bluestein(double **coeff_r, double **coeff_i, int size) {
     return m;
 }
 
-int util_FFT_1D_bluestein(double * inout_r, double * inout_i, 
-    double *n_r, double * n_i,                  //coeff table
-    int * bit_table, double *m_r, double *m_i,  //bit, root table
-    double *temp_r, double *temp_i,             
-    double *temp2_r, double *temp2_i,           
+int util_FFT_1D_bluestein(float * inout_r, float * inout_i, 
+    float *n_r, float * n_i,                  //coeff table
+    int * bit_table, float *m_r, float *m_i,  //bit, root table
+    float *temp_r, float *temp_i,             
+    float *temp2_r, float *temp2_i,           
     int n, int m, int rev) {
     
     assert(n > 0 && m > 0);
     assert(m == 1 || (m & (m-1)) == 0);
     assert(m >= 2 * n + 1);
 
-    double ar, ai, br, bi;
+    float ar, ai, br, bi;
     
     for (int i = 0; i < n; i++) {
         ar = inout_r[i];
@@ -195,20 +195,20 @@ int util_FFT_1D_bluestein(double * inout_r, double * inout_i,
     return 0;
 }
 
-int util_FFT_2D(double * in_r, double * in_i,
+int util_FFT_2D(float * in_r, float * in_i,
     int height, int width,
     int height_m, int width_m,
     int *height_bit_table, int *width_bit_table,
-    double *height_root_r, double *height_root_i,
-    double *height_coeff_r, double *height_coeff_i,
-    double *height_tmp1_r, double *height_tmp1_i,
-    double *height_tmp2_r, double *height_tmp2_i,
-    double *width_root_r, double * width_root_i,
-    double *width_coeff_r, double *width_coeff_i,
-    double *width_tmp1_r, double * width_tmp1_i,
-    double *width_tmp2_r, double *width_tmp2_i,
+    float *height_root_r, float *height_root_i,
+    float *height_coeff_r, float *height_coeff_i,
+    float *height_tmp1_r, float *height_tmp1_i,
+    float *height_tmp2_r, float *height_tmp2_i,
+    float *width_root_r, float * width_root_i,
+    float *width_coeff_r, float *width_coeff_i,
+    float *width_tmp1_r, float * width_tmp1_i,
+    float *width_tmp2_r, float *width_tmp2_i,
     int height_flag, int width_flag, int rev,
-    double * fft_tmp_r, double *fft_tmp_i) {
+    float * fft_tmp_r, float *fft_tmp_i) {
 
     //row major to col major
     for (int y = 0; y < height; y++) {
@@ -266,7 +266,7 @@ int util_FFT_2D(double * in_r, double * in_i,
 
 int L0smoothing_RGB(unsigned char * image, 
     int height, int width,
-    unsigned char * mask, double kappa, double lambda) {
+    unsigned char * mask, float kappa, float lambda) {
 
 #define _util_FFT2(a, b) util_FFT_2D(a, b, height, width, height_m, width_m, \
         height_bit_table, width_bit_table, \
@@ -296,11 +296,11 @@ int L0smoothing_RGB(unsigned char * image,
         1, \
         fft_tmp_r, fft_tmp_i)
 
-    double *Im = (double*)malloc(sizeof(double) * height * width * 3);
+    float *Im = (float*)malloc(sizeof(float) * height * width * 3);
     for (int c = 0; c < 3; c++) {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Im[(y*width+x)+c*height*width] = (double)(image[3*(y*width+x) + c]) / 255.;
+                Im[(y*width+x)+c*height*width] = (float)(image[3*(y*width+x) + c]) / 255.;
             }
         }
     }
@@ -313,50 +313,50 @@ int L0smoothing_RGB(unsigned char * image,
     //FFT routine
     int flag_width_is_power_of2 = (width & (width - 1) == 0);
     int *width_bit_table = NULL;
-    double *width_root_table_r = NULL, *width_root_table_i = NULL;
-    double *width_coeff_table_r = NULL, *width_coeff_table_i = NULL;
-    double *width_temp1_r = NULL, *width_temp1_i = NULL;
-    double *width_temp2_r = NULL, *width_temp2_i = NULL;
+    float *width_root_table_r = NULL, *width_root_table_i = NULL;
+    float *width_coeff_table_r = NULL, *width_coeff_table_i = NULL;
+    float *width_temp1_r = NULL, *width_temp1_i = NULL;
+    float *width_temp2_r = NULL, *width_temp2_i = NULL;
     int width_m;
     if (flag_width_is_power_of2) {
         width_m = width;
     }
     else {
         width_m = util_FFT_preload_bluestein(&width_coeff_table_r, &width_coeff_table_i, width);
-        width_temp1_r = (double*)malloc(sizeof(double) * width_m);
-        width_temp1_i = (double*)malloc(sizeof(double) * width_m);
-        width_temp2_r = (double*)malloc(sizeof(double) * width_m);
-        width_temp2_i = (double*)malloc(sizeof(double) * width_m);
+        width_temp1_r = (float*)malloc(sizeof(float) * width_m);
+        width_temp1_i = (float*)malloc(sizeof(float) * width_m);
+        width_temp2_r = (float*)malloc(sizeof(float) * width_m);
+        width_temp2_i = (float*)malloc(sizeof(float) * width_m);
     }
     util_FFT_preload(&width_bit_table, &width_root_table_r, &width_root_table_i, width_m);
 
     int flag_height_is_power_of2 = (height & (height - 1) == 0);
     int *height_bit_table = NULL;
-    double *height_root_table_r = NULL, *height_root_table_i = NULL;
-    double *height_coeff_table_r = NULL, *height_coeff_table_i = NULL;
-    double *height_temp1_r = NULL, *height_temp1_i = NULL;
-    double *height_temp2_r = NULL, *height_temp2_i = NULL;
+    float *height_root_table_r = NULL, *height_root_table_i = NULL;
+    float *height_coeff_table_r = NULL, *height_coeff_table_i = NULL;
+    float *height_temp1_r = NULL, *height_temp1_i = NULL;
+    float *height_temp2_r = NULL, *height_temp2_i = NULL;
     int height_m;
     if (flag_height_is_power_of2) {
         height_m = height;
     }
     else {
         height_m = util_FFT_preload_bluestein(&height_coeff_table_r, &height_coeff_table_i, height);
-        height_temp1_r = (double*)malloc(sizeof(double) * height_m);
-        height_temp1_i = (double*)malloc(sizeof(double) * height_m);
-        height_temp2_r = (double*)malloc(sizeof(double) * height_m);
-        height_temp2_i = (double*)malloc(sizeof(double) * height_m);
+        height_temp1_r = (float*)malloc(sizeof(float) * height_m);
+        height_temp1_i = (float*)malloc(sizeof(float) * height_m);
+        height_temp2_r = (float*)malloc(sizeof(float) * height_m);
+        height_temp2_i = (float*)malloc(sizeof(float) * height_m);
     }
     util_FFT_preload(&height_bit_table, &height_root_table_r, &height_root_table_i, height_m);
 
-    double * fft_tmp_r = (double*)malloc(sizeof(double) * width * height); //<-- quick col-row convert
-    double * fft_tmp_i = (double*)malloc(sizeof(double) * width * height);
+    float * fft_tmp_r = (float*)malloc(sizeof(float) * width * height); //<-- quick col-row convert
+    float * fft_tmp_i = (float*)malloc(sizeof(float) * width * height);
     //
 
-    double *fx_r = (double*)calloc(width * height, sizeof(double));
-    double *fx_i = (double*)calloc(width * height, sizeof(double));
-    double *fy_r = (double*)calloc(width * height, sizeof(double));
-    double *fy_i = (double*)calloc(width * height, sizeof(double));
+    float *fx_r = (float*)calloc(width * height, sizeof(float));
+    float *fx_i = (float*)calloc(width * height, sizeof(float));
+    float *fy_r = (float*)calloc(width * height, sizeof(float));
+    float *fy_i = (float*)calloc(width * height, sizeof(float));
     fx_r[0] = -1;
     fx_r[width-1] = 1;
     fy_r[0] = -1;
@@ -365,7 +365,7 @@ int L0smoothing_RGB(unsigned char * image,
     _util_FFT2(fx_r, fx_i);
     _util_FFT2(fy_r, fy_i);
 
-    double *Denormin2 = (double*)malloc(sizeof(double) * width * height);
+    float *Denormin2 = (float*)malloc(sizeof(float) * width * height);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             Denormin2[y*width + x] = util_square(fx_r[y*width+x]) + util_square(fx_i[y*width+x])
@@ -376,10 +376,10 @@ int L0smoothing_RGB(unsigned char * image,
     free(fx_r); free(fx_i);
     free(fy_r); free(fy_i);
 
-    double *Normin1_r[3], *Normin1_i[3];
+    float *Normin1_r[3], *Normin1_i[3];
     for (int c = 0; c < 3; c++) {
-        Normin1_r[c] = (double*)malloc(sizeof(double) * height * width);
-        Normin1_i[c] = (double*)calloc(height * width, sizeof(double));
+        Normin1_r[c] = (float*)malloc(sizeof(float) * height * width);
+        Normin1_i[c] = (float*)calloc(height * width, sizeof(float));
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -389,21 +389,21 @@ int L0smoothing_RGB(unsigned char * image,
         _util_FFT2(Normin1_r[c], Normin1_i[c]);
     }
 
-    double *h = (double*)malloc(sizeof(double) * height * width * 3);
-    double *v = (double*)malloc(sizeof(double) * height * width * 3);
+    float *h = (float*)malloc(sizeof(float) * height * width * 3);
+    float *v = (float*)malloc(sizeof(float) * height * width * 3);
 
-    const double betamax = 1e5;
-    double beta = 2 * lambda;
+    const float betamax = 1e5;
+    float beta = 2 * lambda;
 
-    //double *Denormin = (double*)malloc(sizeof(double) * height * width);
-    double *FS_r = (double*)malloc(sizeof(double) * height * width);
-    double *FS_i = (double*)malloc(sizeof(double) * height * width);
-    double *Normin2_r = (double*)malloc(sizeof(double) * height * width);
-    double *Normin2_i= (double*)malloc(sizeof(double) * height * width);
+    //float *Denormin = (float*)malloc(sizeof(float) * height * width);
+    float *FS_r = (float*)malloc(sizeof(float) * height * width);
+    float *FS_i = (float*)malloc(sizeof(float) * height * width);
+    float *Normin2_r = (float*)malloc(sizeof(float) * height * width);
+    float *Normin2_i= (float*)malloc(sizeof(float) * height * width);
 
-    double _Denormin;
+    float _Denormin;
     while (beta < betamax) {
-        double _h, _v;
+        float _h, _v;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 //Denormin[y*width+x] = 1. + beta * Denormin2[y*width+x];
@@ -534,7 +534,7 @@ int L0smoothing_RGB(unsigned char * image,
 
 int L0smoothing(unsigned char * image, 
     int height, int width, int channel,
-    unsigned char * mask, double kappa, double lambda) {
+    unsigned char * mask, float kappa, float lambda) {
     
     assert(width >= 10 && height >= 10);
     assert(INT_MAX / height >= width);

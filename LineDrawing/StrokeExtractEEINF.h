@@ -8,4 +8,4 @@ VRCAI '10
 
 int StrokeExtract(unsigned char * image,
     int height, int width, int channel,
-    int radius, double epsilon);
+    int radius, float epsilon);
