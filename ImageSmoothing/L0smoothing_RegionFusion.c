@@ -154,10 +154,10 @@ inline float util_cal_beta(int iter, int maxiter, float lambda) {
 
 int L0smoothing(unsigned char * image, 
     int height, int width, int channel,
-    unsigned char * mask, float lambda) {
+    float lambda) {
 
     assert(width >= 10 && height >= 10);
-    assert(channel = 3);
+    assert(channel == 3);
     assert(INT_MAX / height >= width);
     assert(lambda > 0);
 
@@ -230,7 +230,7 @@ int L0smoothing(unsigned char * image,
                 for (int j = 0; j < 3; j++) {
                     dif += util_square(blob_cur->Y[j] - blob_tmp->Y[j]);
                 }
-                if (dif * wi * wj <= c * beta * (wi + wj)) {
+                if (dif <= c * beta * (1. / wi + 1. / wj)) {
 
                     for (int j = 0; j < 3; j++) {
                         blob_cur->Y[j] = (wi * blob_cur->Y[j] + wj * blob_tmp->Y[j]) / (wi + wj);
